@@ -119,3 +119,16 @@
   color: #b3261e;
   border: 1px solid #b3261e;
 }
+
+.community__form .events__required {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.events__required small {
+  color: var(--muted);
+}

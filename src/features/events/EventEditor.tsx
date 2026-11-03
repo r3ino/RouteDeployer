@@ -3,6 +3,11 @@ import { useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { Tour } from '../../domain/tour';
 import { deleteStoredRoutes, deleteTour } from '../../data/backend';
+import {
+  PERSONAL_DATA_FIELDS,
+  PERSONAL_DATA_LABELS,
+  type PersonalDataField,
+} from '../../domain/personalData';
 import { requireSupabase } from '../../lib/supabase';
 import {
   formatGermanDateInput,
@@ -60,6 +65,9 @@ export function EventEditor({
   const [eventUrl, setEventUrl] = useState(tour?.eventUrl ?? '');
   const [stations, setStations] = useState(tour?.stations.join(', ') ?? '');
   const [duration, setDuration] = useState(tour?.durationMin ? String(tour.durationMin) : '');
+  const [requiredData, setRequiredData] = useState<PersonalDataField[]>(
+    tour?.requiredPersonalData ?? PERSONAL_DATA_FIELDS,
+  );
   const [file, setFile] = useState<File | null>(null);
   const [removeGpx, setRemoveGpx] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -141,6 +149,7 @@ export function EventEditor({
           season_slug: seasonSlug,
           collection_slug: collectionSlug,
           organizer_id: memberId,
+          ...(collectionSlug === 'events' ? { required_personal_data: requiredData } : {}),
           highlight: false,
         });
         if (insertError) throw insertError;
@@ -238,6 +247,33 @@ export function EventEditor({
                   onChange={(e) => setEventUrl(e.target.value)}
                 />
               </label>
+            )}
+            {collectionSlug === 'events' && (
+              <fieldset className="events__required">
+                <legend>Für die Zusage erforderliche persönliche Daten</legend>
+                {PERSONAL_DATA_FIELDS.map((field) => (
+                  <label key={field} className="events__check">
+                    <input
+                      type="checkbox"
+                      checked={requiredData.includes(field)}
+                      disabled={Boolean(tour)}
+                      onChange={(e) =>
+                        setRequiredData((current) =>
+                          e.target.checked
+                            ? PERSONAL_DATA_FIELDS.filter((f) => f === field || current.includes(f))
+                            : current.filter((f) => f !== field),
+                        )
+                      }
+                    />
+                    {PERSONAL_DATA_LABELS[field]}
+                  </label>
+                ))}
+                <small>
+                  Nur diese Angaben müssen Teilnehmer plausibel hinterlegt haben; sie werden dir in
+                  der Teilnehmerliste angezeigt.
+                  {tour && ' Die Auswahl ist nach dem Anlegen nicht mehr änderbar.'}
+                </small>
+              </fieldset>
             )}
             <label>
               Orte (mit Komma getrennt)

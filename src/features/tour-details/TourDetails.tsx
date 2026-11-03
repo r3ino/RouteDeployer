@@ -25,6 +25,12 @@ import { RouteMap } from '../route-map/RouteMap';
 import { WeatherForecast } from '../weather-forecast/WeatherForecast';
 import { useTourAttendance } from '../community/useTourAttendance';
 import { EventParticipantData } from '../events/EventParticipantData';
+import {
+  PERSONAL_DATA_LABELS,
+  PERSONAL_DATA_FIELDS,
+  missingPersonalData,
+  type PersonalData,
+} from '../../domain/personalData';
 import { FinishFlag } from '../events/FinishFlag';
 import '../events/events.css';
 
@@ -33,6 +39,7 @@ interface Props {
   seasonSlug: string;
   collectionSlug: string;
   memberId: string | null;
+  memberData?: PersonalData | null;
   position: number;
   count: number;
   isPast: boolean;
@@ -82,6 +89,7 @@ export function TourDetails({
   seasonSlug,
   collectionSlug,
   memberId,
+  memberData = null,
   position,
   count,
   isPast,
@@ -94,6 +102,8 @@ export function TourDetails({
 }: Props) {
   const isEvent = collectionSlug === 'events';
   const isOrganizer = isEvent && Boolean(memberId) && tour.organizerId === memberId;
+  const requiredData = tour.requiredPersonalData ?? PERSONAL_DATA_FIELDS;
+  const missingData = isEvent ? missingPersonalData(requiredData, memberData) : [];
   const [consentOpen, setConsentOpen] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
@@ -116,7 +126,7 @@ export function TourDetails({
       type="button"
       className={`attendance__toggle${attendance.isAttending ? ' attendance__toggle--active' : ''}`}
       onClick={() => {
-        if (isEvent && !attendance.isAttending) {
+        if (isEvent && !attendance.isAttending && requiredData.length > 0) {
           setConsentChecked(false);
           setConsentOpen((open) => !open);
         } else {
@@ -313,10 +323,19 @@ export function TourDetails({
           seasonSlug={seasonSlug}
           collectionSlug={collectionSlug}
           tourId={tour.id}
+          required={requiredData}
         />
       )}
 
-      {isEvent && consentOpen && !attendance.isAttending && (
+      {isEvent && consentOpen && !attendance.isAttending && missingData.length > 0 && (
+        <div className="events__consent" role="alert">
+          Für die Zusage fehlen plausible Angaben in deinem Profil:{' '}
+          {missingData.map((field) => PERSONAL_DATA_LABELS[field]).join(', ')}. Bitte ergänze sie
+          in den Profileinstellungen.
+        </div>
+      )}
+
+      {isEvent && consentOpen && !attendance.isAttending && missingData.length === 0 && (
         <div className="events__consent" role="group" aria-label="Einwilligung">
           <label>
             <input
@@ -326,7 +345,7 @@ export function TourDetails({
             />
             <span>
               Ich willige ein, dass der Organisator dieses Events Zugriff auf meine persönlichen
-              Daten (vollständiger Name, Adresse, Geburtsdatum) erhält.
+              Daten ({requiredData.map((field) => PERSONAL_DATA_LABELS[field]).join(', ')}) erhält.
             </span>
           </label>
           <button

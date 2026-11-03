@@ -1,3 +1,4 @@
+import type { PersonalDataField } from './personalData';
 import type { RouteStats } from './route';
 
 export interface TourRoute {
@@ -30,6 +31,8 @@ export interface Tour extends TourRoute {
   organizerId?: string;
   /** Externer Link; nur bei Events gesetzt. */
   eventUrl?: string;
+  /** Persönliche Daten, die für die Zusage erforderlich sind; nur bei Events gesetzt. */
+  requiredPersonalData?: PersonalDataField[];
   /** Optionale zweite Route für denselben Termin. */
   alternative?: TourRoute;
 }

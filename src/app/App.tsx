@@ -380,6 +380,7 @@ function Roadbook({
             seasonSlug={season.slug}
             collectionSlug={collection.slug}
             memberId={memberId}
+            memberData={community.member}
             position={sorted.indexOf(selected) + 1}
             count={sorted.length}
             isPast={selected.id < today}

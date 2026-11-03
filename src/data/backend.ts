@@ -1,4 +1,5 @@
 import type { Collection, Season } from '../domain/catalog';
+import type { PersonalDataField } from '../domain/personalData';
 import type { RouteStats } from '../domain/route';
 import type { Tour, TourRoute } from '../domain/tour';
 import { requireSupabase } from '../lib/supabase';
@@ -36,6 +37,7 @@ interface TourRow {
   alternative: StoredTourRoute | null;
   organizer_id: string | null;
   event_url?: string | null;
+  required_personal_data?: PersonalDataField[] | null;
 }
 
 interface StoredTourRoute {
@@ -89,7 +91,7 @@ export async function fetchRoadbook(): Promise<Season[]> {
       const withEventUrl = await client
         .from('tours')
         .select(
-          'id, season_slug, collection_slug, title, teaser, planned_by, meeting_time, meeting_place, stations, highlight, duration_min, gpx_key, route_stats, alternative, organizer_id, event_url',
+          'id, season_slug, collection_slug, title, teaser, planned_by, meeting_time, meeting_place, stations, highlight, duration_min, gpx_key, route_stats, alternative, organizer_id, event_url, required_personal_data',
         )
         .order('id');
       if (!withEventUrl.error || !isMissingEventUrlColumn(withEventUrl.error)) {
@@ -146,6 +148,10 @@ export async function fetchRoadbook(): Promise<Season[]> {
             organizerId: row.organizer_id ?? undefined,
             eventUrl:
               row.collection_slug === 'events' ? row.event_url ?? undefined : undefined,
+            requiredPersonalData:
+              row.collection_slug === 'events'
+                ? row.required_personal_data ?? ['full_name', 'address', 'birth_date']
+                : undefined,
           })),
       })),
   }));
